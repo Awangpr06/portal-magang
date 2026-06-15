@@ -49,17 +49,18 @@
         "post-create-project-cmd": [
             "@php artisan key:generate --ansi"
         ]
-   "extra": {
-    "branch-alias": {
-        "dev-master": "10.x-dev"
     },
-    "laravel": {
-        "dont-discover": [
-            "nunomaduro/collision"
-        ]
-    }
-},
-"config": {
+    "extra": {
+        "branch-alias": {
+            "dev-master": "10.x-dev"
+        },
+        "laravel": {
+            "dont-discover": [
+                "nunomaduro/collision"
+            ]
+        }
+    },
+    "config": {
         "optimize-autoloader": true,
         "preferred-install": "dist",
         "sort-packages": true,
