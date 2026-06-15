@@ -1,0 +1,42 @@
+TUTORIAL HOSTING PORTAL MAGANG KE VERCEL + SUPABASE
+
+Catatan database:
+- File db_laravel.sql dari phpMyAdmin adalah dump MySQL/MariaDB.
+- Supabase memakai PostgreSQL, jadi db_laravel.sql tidak bisa langsung ditempel ke SQL Editor Supabase.
+- Gunakan file db_laravel_supabase_postgres.sql yang sudah dikonversi untuk Supabase.
+
+RINGKASAN URUTAN:
+1. Buat project Supabase.
+2. Import db_laravel_supabase_postgres.sql ke SQL Editor Supabase.
+3. Ambil connection string Supabase Session Pooler.
+4. Upload project ini ke GitHub.
+5. Import repo ke Vercel.
+6. Isi Environment Variables di Vercel.
+7. Deploy.
+
+ENV VERCEL MINIMAL:
+APP_NAME=Portal Magang
+APP_ENV=production
+APP_KEY=base64:ISI_HASIL_KEY_KAMU
+APP_DEBUG=false
+APP_URL=https://nama-project-kamu.vercel.app
+LOG_CHANNEL=stderr
+LOG_LEVEL=error
+DB_CONNECTION=pgsql
+DATABASE_URL=postgresql://postgres.xxxxx:PASSWORD@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres?sslmode=require
+CACHE_DRIVER=array
+SESSION_DRIVER=cookie
+QUEUE_CONNECTION=sync
+FILESYSTEM_DISK=public
+
+CARA MEMBUAT APP_KEY:
+php artisan key:generate --show
+
+BUILD COMMAND VERCEL:
+composer install --no-dev --optimize-autoloader && npm ci && npm run build
+
+OUTPUT DIRECTORY:
+public
+
+CATATAN:
+Vercel tidak cocok untuk upload file lokal Laravel secara permanen. Untuk dokumen/foto/laporan, pindahkan ke Supabase Storage jika ingin dipakai produksi.
