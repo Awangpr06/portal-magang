@@ -55,12 +55,14 @@
             "dev-master": "10.x-dev"
         },
         "laravel": {
-            "dont-discover": [
-                "pestphp/pest",
-                "pestphp/pest-plugin-laravel"
-            ]
-        }
-    },
+    "dont-discover": [
+        "laravel/breeze",
+        "laravel/sail",
+        "pestphp/pest",
+        "pestphp/pest-plugin-laravel",
+        "spatie/laravel-ignition"
+    ]
+}
     "config": {
         "optimize-autoloader": true,
         "preferred-install": "dist",
