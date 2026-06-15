@@ -55,10 +55,9 @@
         "dev-master": "10.x-dev"
     },
     "laravel": {
-        "dont-discover": [
-            "nunomaduro/collision"
-        ]
-    }
+    "dont-discover": [
+        "nunomaduro/collision"
+    ]
 }
     "config": {
         "optimize-autoloader": true,
