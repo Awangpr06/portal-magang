@@ -13,6 +13,6 @@
     { "src": "/robots.txt", "dest": "/public/robots.txt" },
     { "src": "/(.*)", "dest": "/api/index.php" }
   ],
-  "buildCommand": "composer install --no-dev --optimize-autoloader && npm ci && npm run build",
+  "buildCommand": "npm ci && npm run build",
   "outputDirectory": "public"
 }
