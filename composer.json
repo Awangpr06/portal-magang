@@ -51,15 +51,17 @@
         ]
     },
     "extra": {
-        "branch-alias": {
-            "dev-master": "10.x-dev"
-        },
-        "laravel": {
-            "dont-discover": [
-                "nunomaduro/collision"
-            ]
-        }
+    "branch-alias": {
+        "dev-master": "10.x-dev"
     },
+    "laravel": {
+        "dont-discover": [
+            "nunomaduro/collision",
+            "pestphp/pest",
+            "pestphp/pest-plugin-laravel"
+        ]
+    }
+}
     "config": {
         "optimize-autoloader": true,
         "preferred-install": "dist",
