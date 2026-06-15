@@ -21,7 +21,8 @@ class AppServiceProvider extends ServiceProvider
      * Bootstrap any application services.
      */
     public function boot(): void
-    {
+{
+    $this->app->booted(function () {
         View::composer('peserta.*', function ($view) {
             $context = app(PesertaDataService::class)->forUser(request()->user());
             $data = $view->getData();
@@ -47,5 +48,5 @@ class AppServiceProvider extends ServiceProvider
                 }
             }
         });
-    }
+    });
 }
