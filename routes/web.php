@@ -6963,3 +6963,46 @@ Route::get('/debug-admin-dashboard', function () {
         ], 500);
     }
 });
+
+Route::get('/debug-admin-context', function () {
+    try {
+        $result = [
+            'auth_check' => auth()->check(),
+            'user_id' => auth()->id(),
+            'user_role' => auth()->user()->role ?? null,
+            'has_admin_data_service' => class_exists(\App\Services\AdminDataService::class),
+        ];
+
+        if (class_exists(\App\Services\AdminDataService::class)) {
+            $context = app(\App\Services\AdminDataService::class)->context();
+            $result['context_keys'] = array_keys($context);
+            $result['context_preview'] = array_slice($context, 0, 5, true);
+        }
+
+        return response()->json($result);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'message' => $e->getMessage(),
+            'class' => get_class($e),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+            'trace' => collect($e->getTrace())->take(5)->values(),
+        ], 500);
+    }
+});
+
+Route::get('/debug-admin-view', function () {
+    try {
+        return response()->json([
+            'rendered' => view('admin.dashboard.index')->render()
+        ]);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'message' => $e->getMessage(),
+            'class' => get_class($e),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+            'trace' => collect($e->getTrace())->take(5)->values(),
+        ], 500);
+    }
+});
