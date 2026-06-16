@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Services\AdminDataService;
 use App\Services\PesertaDataService;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -22,9 +23,19 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if (app()->environment('production')) {
+            URL::forceScheme('https');
+        }
+
         $this->app->booted(function () {
             View::composer('peserta.*', function ($view) {
-                $context = app(PesertaDataService::class)->forUser(request()->user());
+                $user = request()->user();
+
+                if (! $user) {
+                    return;
+                }
+
+                $context = app(PesertaDataService::class)->forUser($user);
                 $data = $view->getData();
 
                 $view->with('pesertaContext', $context);
