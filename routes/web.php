@@ -7042,3 +7042,280 @@ Route::get('/debug-admin-view-error', function () {
         ], 500);
     }
 });
+
+// === VERCEL SAFE ADMIN ROUTES START ===
+Route::middleware(['auth'])->group(function () {
+    $ctx = function () {
+        return app(\App\Services\Admin\AdminDataService::class)->context();
+    };
+
+    $safeView = function (string $view, array $data = [], string $title = 'Halaman Admin') {
+        try {
+            if (! view()->exists($view)) {
+                throw new \InvalidArgumentException("View [$view] tidak ditemukan.");
+            }
+
+            return response(view($view, $data)->render());
+        } catch (\Throwable $e) {
+            $message = e($e->getMessage());
+            $file = e($e->getFile());
+            $line = e((string) $e->getLine());
+
+            return response("
+                <!doctype html>
+                <html lang='id'>
+                <head>
+                    <meta charset='utf-8'>
+                    <meta name='viewport' content='width=device-width, initial-scale=1'>
+                    <title>{$title}</title>
+                    <style>
+                        body{font-family:Arial,sans-serif;background:#f5f7fb;margin:0;padding:40px;color:#111827}
+                        .box{max-width:900px;margin:auto;background:#fff;border-radius:14px;padding:28px;box-shadow:0 10px 30px rgba(15,23,42,.08)}
+                        h1{margin-top:0;color:#1f2937}
+                        pre{background:#111827;color:#f9fafb;padding:16px;border-radius:10px;white-space:pre-wrap;overflow:auto}
+                        a{display:inline-block;margin-top:16px;background:#2563eb;color:#fff;padding:10px 14px;border-radius:8px;text-decoration:none}
+                    </style>
+                </head>
+                <body>
+                    <div class='box'>
+                        <h1>{$title}</h1>
+                        <p>Halaman ini berhasil dibuka, tetapi tampilan asli masih memiliki bagian yang perlu disesuaikan untuk hosting.</p>
+                        <pre>{$message}
+File: {$file}
+Line: {$line}</pre>
+                        <a href='/admin/dashboard'>Kembali ke Dashboard</a>
+                    </div>
+                </body>
+                </html>
+            ", 200);
+        }
+    };
+
+    Route::get('/admin/verifikasi-administrasi', function () use ($ctx, $safeView) {
+        $c = $ctx();
+
+        return $safeView('admin.verifikasi.index', $c, 'Verifikasi Administrasi');
+    })->name('admin.verifikasi.index');
+
+    Route::get('/admin/verifikasi-administrasi/riwayat', function () use ($ctx, $safeView) {
+        $c = $ctx();
+
+        return $safeView('admin.verifikasi.riwayat', [
+            'adminVerificationHistories' => $c['adminVerificationHistories'] ?? collect(),
+            'adminVerificationHistoryStats' => $c['adminVerificationHistoryStats'] ?? [
+                'total' => 0,
+                'disetujui' => 0,
+                'ditolak' => 0,
+                'hari_ini' => 0,
+            ],
+        ], 'Riwayat Verifikasi');
+    })->name('admin.verifikasi.riwayat');
+
+    Route::get('/admin/manajemen-magang', function () use ($ctx, $safeView) {
+        $c = $ctx();
+
+        $magangStats = [
+            'total_participants' => collect($c['adminParticipants'] ?? [])->count(),
+            'attendance_today' => collect($c['adminAttendances'] ?? [])->count(),
+            'reports_count' => collect($c['adminMagangReports'] ?? [])->count(),
+            'active_placements' => collect($c['adminPlacements'] ?? [])->count(),
+            'running_periods' => collect($c['adminParticipants'] ?? [])->pluck('program_magang')->filter()->unique()->count(),
+        ];
+
+        $preview = collect()
+            ->concat(collect($c['adminAttendances'] ?? [])->take(3))
+            ->concat(collect($c['adminMagangActivities'] ?? [])->take(3))
+            ->concat(collect($c['adminMagangReports'] ?? [])->take(3))
+            ->concat(collect($c['adminPlacements'] ?? [])->take(3))
+            ->values();
+
+        return $safeView('admin.magang.index', [
+            'magangStats' => $magangStats,
+            'adminMagangPreview' => $preview,
+        ], 'Manajemen Magang');
+    })->name('admin.magang.index');
+
+    Route::get('/admin/manajemen-magang/absensi', function () use ($ctx, $safeView) {
+        $c = $ctx();
+
+        return $safeView('admin.magang.absensi', [
+            'adminAttendances' => $c['adminAttendances'] ?? collect(),
+        ], 'Absensi Magang');
+    })->name('admin.magang.absensi');
+
+    Route::get('/admin/manajemen-magang/dokumen', function () use ($ctx, $safeView) {
+        $c = $ctx();
+
+        return $safeView('admin.magang.dokumen', [
+            'adminDocumentParticipants' => $c['adminDocumentParticipants'] ?? collect(),
+            'adminDocumentTypes' => $c['adminDocumentTypes'] ?? collect(),
+            'adminDocumentStats' => $c['adminDocumentStats'] ?? [],
+        ], 'Dokumen Magang');
+    })->name('admin.magang.dokumen');
+
+    Route::get('/admin/manajemen-magang/kegiatan', function () use ($ctx, $safeView) {
+        $c = $ctx();
+
+        return $safeView('admin.magang.kegiatan', [
+            'adminMagangActivities' => $c['adminMagangActivities'] ?? collect(),
+            'adminMagangParticipants' => $c['adminParticipants'] ?? collect(),
+        ], 'Kegiatan Magang');
+    })->name('admin.magang.kegiatan');
+
+    Route::get('/admin/manajemen-magang/laporan', function () use ($ctx, $safeView) {
+        $c = $ctx();
+
+        return $safeView('admin.magang.laporan', [
+            'pageTitle' => 'Laporan Berkala',
+            'adminMagangReports' => $c['adminMagangReports'] ?? collect(),
+        ], 'Laporan Berkala');
+    })->name('admin.magang.laporan');
+
+    Route::get('/admin/manajemen-magang/laporan-akhir', function () use ($ctx, $safeView) {
+        $c = $ctx();
+
+        return $safeView('admin.magang.laporan', [
+            'pageTitle' => 'Laporan Akhir',
+            'adminMagangReports' => $c['adminMagangReports'] ?? collect(),
+        ], 'Laporan Akhir');
+    })->name('admin.magang.laporan-akhir');
+
+    Route::get('/admin/manajemen-magang/penempatan', function () use ($ctx, $safeView) {
+        $c = $ctx();
+
+        return $safeView('admin.magang.penempatan', [
+            'adminPlacements' => $c['adminPlacements'] ?? collect(),
+            'adminParticipants' => $c['adminParticipants'] ?? collect(),
+            'adminMentors' => $c['adminMentors'] ?? collect(),
+            'adminAdvisors' => $c['adminAdvisors'] ?? collect(),
+        ], 'Penempatan Magang');
+    })->name('admin.magang.penempatan');
+
+    Route::get('/admin/manajemen-magang/periode', function () use ($ctx, $safeView) {
+        $c = $ctx();
+
+        return $safeView('admin.magang.periode', $c, 'Periode Magang');
+    })->name('admin.magang.periode');
+
+    Route::get('/admin/manajemen-magang/penilaian', function () use ($ctx, $safeView) {
+        $c = $ctx();
+
+        return $safeView('admin.magang.penilaian', [
+            'adminParticipants' => $c['adminParticipants'] ?? collect(),
+            'adminMentors' => $c['adminMentors'] ?? collect(),
+            'adminAdvisors' => $c['adminAdvisors'] ?? collect(),
+        ], 'Penilaian Magang');
+    })->name('admin.magang.penilaian');
+
+    Route::get('/admin/manajemen-pengguna', function () use ($ctx, $safeView) {
+        $c = $ctx();
+
+        return $safeView('admin.pengguna.index', [
+            'adminUsers' => $c['adminUsers'] ?? collect(),
+        ], 'Manajemen Pengguna');
+    })->name('admin.pengguna.index');
+
+    Route::get('/admin/manajemen-pengguna/peserta-magang', function () use ($ctx, $safeView) {
+        $c = $ctx();
+
+        return $safeView('admin.pengguna.peserta', [
+            'adminParticipants' => $c['adminParticipants'] ?? collect(),
+            'adminCampuses' => $c['adminCampuses'] ?? collect(),
+        ], 'Peserta Magang');
+    })->name('admin.pengguna.peserta');
+
+    Route::get('/admin/manajemen-pengguna/mentor', function () use ($ctx, $safeView) {
+        $c = $ctx();
+
+        return $safeView('admin.pengguna.mentor', [
+            'adminMentors' => $c['adminMentors'] ?? collect(),
+        ], 'Mentor');
+    })->name('admin.pengguna.mentor');
+
+    Route::get('/admin/manajemen-pengguna/pembimbing-akademik', function () use ($ctx, $safeView) {
+        $c = $ctx();
+
+        return $safeView('admin.pengguna.pembimbing', [
+            'adminAdvisors' => $c['adminAdvisors'] ?? collect(),
+        ], 'Pembimbing Akademik');
+    })->name('admin.pengguna.pembimbing');
+
+    Route::get('/admin/manajemen-perguruan-tinggi', function () use ($ctx, $safeView) {
+        $c = $ctx();
+
+        return $safeView('admin.perguruan_tinggi.index', [
+            'adminCampuses' => $c['adminCampuses'] ?? collect(),
+            'campusStats' => [
+                'total' => collect($c['adminCampuses'] ?? [])->count(),
+                'aktif' => collect($c['adminCampuses'] ?? [])->where('status', 'aktif')->count(),
+                'menunggu' => collect($c['adminCampuses'] ?? [])->where('status', 'menunggu')->count(),
+                'ditolak' => collect($c['adminCampuses'] ?? [])->where('status', 'ditolak')->count(),
+            ],
+            'cooperationStats' => [
+                'total' => 0,
+                'aktif' => 0,
+                'menunggu' => 0,
+                'berakhir' => 0,
+            ],
+        ], 'Manajemen Perguruan Tinggi');
+    })->name('admin.perguruan-tinggi.index');
+
+    Route::get('/admin/manajemen-perguruan-tinggi/data', function () use ($ctx, $safeView) {
+        $c = $ctx();
+
+        return $safeView('admin.perguruan_tinggi.data', [
+            'adminCampuses' => $c['adminCampuses'] ?? collect(),
+        ], 'Data Perguruan Tinggi');
+    })->name('admin.perguruan-tinggi.data');
+
+    Route::get('/admin/laporan-monitoring', function () use ($ctx, $safeView) {
+        $c = $ctx();
+
+        return $safeView('admin.laporan_monitoring.index', [
+            'activeTab' => 'overview',
+            'adminStats' => $c['adminStats'] ?? [],
+            'adminRecentActivities' => $c['adminRecentActivities'] ?? collect(),
+            'adminMagangReports' => $c['adminMagangReports'] ?? collect(),
+        ], 'Laporan Monitoring');
+    })->name('admin.laporan-monitoring.index');
+
+    Route::get('/admin/laporan-monitoring/rekap-absensi', function () use ($ctx, $safeView) {
+        $c = $ctx();
+
+        return $safeView('admin.laporan_monitoring.rekap_absensi', [
+            'adminAttendanceRecaps' => $c['adminAttendanceRecaps'] ?? collect(),
+        ], 'Rekap Absensi');
+    })->name('admin.laporan-monitoring.rekap-absensi');
+
+    Route::get('/admin/laporan-monitoring/rekap-kegiatan', function () use ($ctx, $safeView) {
+        $c = $ctx();
+
+        return $safeView('admin.laporan_monitoring.rekap_kegiatan', [
+            'adminMagangActivities' => $c['adminMagangActivities'] ?? collect(),
+        ], 'Rekap Kegiatan');
+    })->name('admin.laporan-monitoring.rekap-kegiatan');
+
+    Route::get('/admin/laporan-monitoring/statistik-pengguna', function () use ($ctx, $safeView) {
+        $c = $ctx();
+
+        return $safeView('admin.laporan_monitoring.statistik_pengguna', [
+            'adminUsers' => $c['adminUsers'] ?? collect(),
+            'adminParticipants' => $c['adminParticipants'] ?? collect(),
+            'adminMentors' => $c['adminMentors'] ?? collect(),
+            'adminAdvisors' => $c['adminAdvisors'] ?? collect(),
+        ], 'Statistik Pengguna');
+    })->name('admin.laporan-monitoring.statistik-pengguna');
+
+    Route::get('/admin/laporan-monitoring/statistik-perguruan-tinggi', function () use ($ctx, $safeView) {
+        $c = $ctx();
+
+        return $safeView('admin.laporan_monitoring.statistik_perguruan_tinggi', [
+            'adminCampuses' => $c['adminCampuses'] ?? collect(),
+        ], 'Statistik Perguruan Tinggi');
+    })->name('admin.laporan-monitoring.statistik-perguruan-tinggi');
+
+    Route::get('/admin/pengaturan', function () use ($ctx, $safeView) {
+        return $safeView('admin.pengaturan.index', $ctx(), 'Pengaturan');
+    })->name('admin.pengaturan.index');
+});
+// === VERCEL SAFE ADMIN ROUTES END ===
