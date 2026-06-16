@@ -6939,3 +6939,27 @@ Route::middleware(['auth'])->group(function () {
 });
 
 require __DIR__.'/auth.php';
+
+Route::get('/debug-admin-dashboard', function () {
+    try {
+        if (!auth()->check()) {
+            return response()->json(['message' => 'not authenticated'], 401);
+        }
+
+        return response()->json([
+            'user_id' => auth()->id(),
+            'user_name' => auth()->user()->name ?? null,
+            'user_role' => auth()->user()->role ?? null,
+            'default_db' => config('database.default'),
+            'db_host' => config('database.connections.pgsql.host'),
+        ]);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'message' => $e->getMessage(),
+            'class' => get_class($e),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+            'trace' => collect($e->getTrace())->take(5)->values(),
+        ], 500);
+    }
+});
