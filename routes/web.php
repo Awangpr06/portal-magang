@@ -7006,3 +7006,39 @@ Route::get('/debug-admin-view', function () {
         ], 500);
     }
 });
+
+Route::get('/debug-admin-dashboard-error', function () {
+    try {
+        $serviceExists = class_exists(\App\Services\Admin\AdminDataService::class);
+
+        $context = app(\App\Services\Admin\AdminDataService::class)->context();
+
+        return response()->json([
+            'status' => 'admin_service_ok',
+            'service_exists' => $serviceExists,
+            'context_keys' => array_keys($context),
+        ]);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'status' => 'admin_service_error',
+            'message' => $e->getMessage(),
+            'class' => get_class($e),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+        ], 500);
+    }
+});
+
+Route::get('/debug-admin-view-error', function () {
+    try {
+        return view('admin.dashboard')->render();
+    } catch (\Throwable $e) {
+        return response()->json([
+            'status' => 'admin_view_error',
+            'message' => $e->getMessage(),
+            'class' => get_class($e),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+        ], 500);
+    }
+});
